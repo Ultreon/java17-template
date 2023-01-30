@@ -1,0 +1,118 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'idea'
+    id 'eclipse'
+    id 'maven-publish'
+}
+
+// Group and version.
+group property("projectGroup")
+version property("projectVersion")
+
+// Base name.
+archivesBaseName = "$projectId"
+
+// Compat
+sourceCompatibility = targetCompatibility = 17
+
+// Dependency repositories. For the project.
+repositories {
+    // Include local maven, why not?
+    mavenLocal()
+
+    // Recommended repos.
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    // Required implementation.
+    implementation 'org.jetbrains:annotations:22.0.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+    // Other
+    // {...}
+}
+
+// Jar configuration.
+jar {
+    // Manifest
+    //noinspection GroovyAssignabilityCheck
+    manifest {
+        attributes([
+                // Specifications
+                "Specification-Title"     : projectName,
+                "Specification-Vendor"    : teamName,
+                "Specification-Version"   : projectVersion,
+
+                // Implementations
+                "Implementation-Title"    : projectId,
+                "Implementation-Vendor"   : teamName,
+                "Implementation-Version"  : projectVersion,
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+        ])
+    }
+
+    // Collect the api dependencies, and include them in jar.
+    from {
+        configurations.api.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    // Include duplicates
+    duplicatesStrategy DuplicatesStrategy.INCLUDE
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+
+    publications {
+        //noinspection GroovyAssignabilityCheck
+        gpr(MavenPublication) {
+            //noinspection GroovyAssignabilityCheck
+            from components.java
+        }
+    }
+}
+
+// Configure java compilation.
+compileJava {
+    // Compatibility.
+    sourceCompatibility "17"
+    targetCompatibility "17"
+
+    // Java toolchain version.
+    javaToolchains {
+        version "17"
+    }
+
+    options.fork = true
+}
+
+// Configure how resources are being processed.
+processResources {
+    duplicatesStrategy DuplicatesStrategy.INCLUDE
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Log some information.
+println "Project: ~"
+println "  ID     : $projectId"
+println "  Name   : $projectName"
+println "  Group  : $projectGroup"
+println "  Version: $projectVersion"
+println "Compile: ~"
+println "  Java: ~"
+println "    Version: ${JavaVersion.current().toString()}"
+println "    Source : ${compileJava.sourceCompatibility}"
+println "    Target : ${compileJava.targetCompatibility}"
+println "    Is Fork: ${compileJava.options.isFork()}"
+println "Gradle: ~"
+println "  Version: $project.gradle.gradleVersion"
